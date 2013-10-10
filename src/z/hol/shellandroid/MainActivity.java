@@ -1,32 +1,37 @@
-package com.example.shellandroid;
+package z.hol.shellandroid;
 
 import java.io.File;
 import java.io.IOException;
 
+import z.hol.shellandroid.utils.AssetUtils;
+import z.hol.shellandroid.utils.ShellUtils;
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.FileObserver;
+import android.text.TextUtils;
+import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.EditText;
-
-import com.example.shellandroid.TestForExec.TestShell;
-import com.mgyun.shua.su.permis.utils.AssetUtils;
+import android.widget.TextView;
 
 public class MainActivity extends Activity implements OnClickListener{
 	
+	private TextView txtResult;
 	private EditText edtCmd;
-	private TestShell mShell;
+	private ShellAndroid mShell;
 	private File mFlagFile;
-	private CmdTerminalObserver mTerminalObserver;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		edtCmd = (EditText) findViewById(R.id.edit);
+		txtResult = (TextView) findViewById(R.id.text);
+		txtResult.setMovementMethod(new ScrollingMovementMethod());
 		findViewById(R.id.execute).setOnClickListener(this);
+		
 		
 		mFlagFile = getFileStreamPath("flag_file");
 		if (!mFlagFile.exists()){
@@ -38,19 +43,18 @@ public class MainActivity extends Activity implements OnClickListener{
 			}
 		}
 		
-//		try {
-//			AssetUtils.extractAsset(this, "cflag", false);
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		try {
+			AssetUtils.extractAsset(this, "cflag", true);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		ShellUtils.setChmod("/data/data/z.hol.shellandroid/files/cflag", "770");
 		
-		mShell = new TestShell();
+		mShell = new ShellAndroid();
 		mShell.printOutput();
 		mShell.setFlagFile(mFlagFile.getAbsolutePath());
 		
-		mTerminalObserver = new CmdTerminalObserver();
-		mTerminalObserver.startWatching();
 	}
 
 	@Override
@@ -67,34 +71,35 @@ public class MainActivity extends Activity implements OnClickListener{
 		if (mShell != null){
 			mShell.close();
 		}
-		if (mTerminalObserver != null){
-			mTerminalObserver.stopWatching();
-		}
 	}
 
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
 		String cmd = edtCmd.getText().toString();
-		mShell.exec(false, cmd);
+		new ExecuteTask().execute(cmd);
 		edtCmd.setText("");
 		edtCmd.requestFocus();
 	}
-
-	private class CmdTerminalObserver extends FileObserver{
-		private final String mWatchedFile;
-
-		public CmdTerminalObserver() {
-			super(mFlagFile.getAbsolutePath(), OPEN);
-			// TODO Auto-generated constructor stub
-			mWatchedFile = mFlagFile.getAbsolutePath();
-		}
+	
+	private class ExecuteTask extends AsyncTask<String, Void, String>{
 
 		@Override
-		public void onEvent(int event, String path) {
+		protected String doInBackground(String... params) {
 			// TODO Auto-generated method stub
-			System.out.println(mWatchedFile + " opened");
+			mShell.exec(false, params);
+			return mShell.getLastResult();
 		}
 		
+		@Override
+		protected void onPostExecute(String result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			if (!TextUtils.isEmpty(result)){
+				txtResult.setText(result);
+			}else{
+				txtResult.setText("Empty result");
+			}
+		}
 	}
 }

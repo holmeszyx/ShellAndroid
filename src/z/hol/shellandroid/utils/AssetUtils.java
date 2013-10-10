@@ -1,4 +1,4 @@
-package com.mgyun.shua.su.permis.utils;
+package z.hol.shellandroid.utils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

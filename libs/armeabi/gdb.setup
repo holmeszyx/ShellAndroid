@@ -1,2 +1,0 @@
-set solib-search-path ./obj/local/armeabi
-directory /home/holmes/prosoft/android-ndk-r8d/platforms/android-5/arch-arm/usr/include /home/holmes/prosoft/android-ndk-r8d/sources/cxx-stl/stlport/stlport /home/holmes/prosoft/android-ndk-r8d/sources/cxx-stl//gabi++/include jni
