@@ -14,3 +14,12 @@ and then
 	the last result: uid=10103(u0_a103) gid=10103(u0_a103) groups=1028(sdcard_r)
 	
 A exact result of last command got from the ShellAndroid.
+
+
+Bug
+---
+
+* Some commands makes the shell unable to work. The known commands below(They almost are interactive commands):
+	
+	if
+	wc

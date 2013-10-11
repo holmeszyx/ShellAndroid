@@ -1,10 +1,5 @@
 package z.hol.shellandroid;
 
-import java.io.File;
-import java.io.IOException;
-
-import z.hol.shellandroid.utils.AssetUtils;
-import z.hol.shellandroid.utils.ShellUtils;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -21,7 +16,6 @@ public class MainActivity extends Activity implements OnClickListener{
 	private TextView txtResult;
 	private EditText edtCmd;
 	private ShellAndroid mShell;
-	private File mFlagFile;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -32,28 +26,12 @@ public class MainActivity extends Activity implements OnClickListener{
 		txtResult.setMovementMethod(new ScrollingMovementMethod());
 		findViewById(R.id.execute).setOnClickListener(this);
 		
-		
-		mFlagFile = getFileStreamPath("flag_file");
-		if (!mFlagFile.exists()){
-			try {
-				mFlagFile.createNewFile();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
-		try {
-			AssetUtils.extractAsset(this, "cflag", true);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		ShellUtils.setChmod("/data/data/z.hol.shellandroid/files/cflag", "770");
-		
+		//---- shell initialization ----
 		mShell = new ShellAndroid();
+		String flagFile = mShell.initFlag(getApplicationContext());
 		mShell.printOutput();
-		mShell.setFlagFile(mFlagFile.getAbsolutePath());
+		mShell.setFlagFile(flagFile);
+		//---- finish shell initialization ----
 		
 	}
 
@@ -87,7 +65,13 @@ public class MainActivity extends Activity implements OnClickListener{
 		@Override
 		protected String doInBackground(String... params) {
 			// TODO Auto-generated method stub
-			mShell.exec(false, params);
+			String cmd = params[0];
+			if (cmd.startsWith("0x")){
+				byte[] ascii = new byte[]{Integer.valueOf(cmd.substring(2), 16).byteValue()};
+				mShell.exec(false, new String(ascii));
+			}else{
+				mShell.exec(false, params);
+			}
 			return mShell.getLastResult();
 		}
 		

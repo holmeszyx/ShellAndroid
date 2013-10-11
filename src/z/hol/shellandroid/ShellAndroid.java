@@ -1,13 +1,23 @@
 package z.hol.shellandroid;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import z.hol.shellandroid.utils.AssetUtils;
+import z.hol.shellandroid.utils.ShellUtils;
+import android.content.Context;
 import android.os.FileObserver;
 
+/**
+ * A Shell of android
+ * @author holmes
+ *
+ */
 public class ShellAndroid implements Shell{
-
+	public static final String CFLAG_TOOL_FILE_NAME = "cflag";
+	public static final String FLAG_FILE_NAME = "flag_file";
 	public static final int STILL_RUNNING = -1024;
 	public static final int PROCESS_NEVER_CREATED = -18030;
 
@@ -15,6 +25,7 @@ public class ShellAndroid implements Shell{
 	private InputStream mReadStream, mErrorStream;
 	private OutputStream mWriteStream;
 	private String mFlagFile;
+	private String mFlagTrigger;
 	private String mFlagCmd;
 	
 	private CmdTerminalObserver mTerminalObserver;
@@ -29,9 +40,42 @@ public class ShellAndroid implements Shell{
 		init();
 	}
 	
+	/**
+	 * initialize command terminal flag tool
+	 * @param context
+	 * @return
+	 */
+	public String initFlag(Context context){
+		
+		File flagFile = context.getFileStreamPath(FLAG_FILE_NAME);
+		if (!flagFile.exists()){
+			try {
+				flagFile.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		try {
+			AssetUtils.extractAsset(context, CFLAG_TOOL_FILE_NAME, true);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		File cFlag = context.getFileStreamPath(CFLAG_TOOL_FILE_NAME);
+		mFlagTrigger = cFlag.getAbsolutePath();
+		ShellUtils.setChmod(mFlagTrigger, "770");
+		return flagFile.getAbsolutePath();
+	}
+	
+	/**
+	 * set command terminal flag file, which triggered by flag tool
+	 * @param file
+	 */
 	public void setFlagFile(String file){
 		mFlagFile = file;
-		mFlagCmd = "/data/data/z.hol.shellandroid/files/cflag " + mFlagFile;
+		mFlagCmd = mFlagTrigger + " " + mFlagFile;
 		if (mTerminalObserver != null){
 			mTerminalObserver.stopWatching();
 		}
@@ -101,13 +145,20 @@ public class ShellAndroid implements Shell{
 		return false;
 	}
 	
+	/**
+	 * internal execute
+	 * @param cmds
+	 */
 	private void execute(String... cmds){
 		for (int i = 0; i < cmds.length; i ++){
 			String cmd = cmds[i];
 			System.out.println("cmd: " + cmd);
 			byte[] rawCmd = cmd.getBytes();
+			
+			// clean the result for new command
 			mLastResultBuilder.delete(0, mLastResultBuilder.length());
 			mLastResult = null;
+
 			try {
 				mWriteStream.write(rawCmd);
 				mWriteStream.write(10);
@@ -137,6 +188,11 @@ public class ShellAndroid implements Shell{
 		thread.start();
 	}
 	
+	/**
+	 * Command result out put runnable of thread
+	 * @author holmes
+	 *
+	 */
 	private class OutputRunnable implements Runnable {
 
 		@Override
@@ -176,6 +232,11 @@ public class ShellAndroid implements Shell{
 		return PROCESS_NEVER_CREATED;
 	}
 
+	/**
+	 * A observer for command finished
+	 * @author holmes
+	 *
+	 */
 	private class CmdTerminalObserver extends FileObserver{
 		@SuppressWarnings("unused")
 		protected final String mWatchedFile;
