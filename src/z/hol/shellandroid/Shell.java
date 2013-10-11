@@ -1,5 +1,10 @@
 package z.hol.shellandroid;
 
+/**
+ * A shell
+ * @author holmes
+ *
+ */
 public interface Shell {
 
 

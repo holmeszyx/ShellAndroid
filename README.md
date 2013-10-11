@@ -15,11 +15,40 @@ and then
 	
 A exact result of last command got from the ShellAndroid.
 
+How to use
+----------
+
+* Initialize the ShellAndroid.(see mainActivity.java in example)
+
+		//---- shell initialization ----
+		mShell = new ShellAndroid();
+		String flagFile = mShell.initFlag(getApplicationContext());
+		mShell.printOutput();
+		mShell.setFlagFile(flagFile);
+		//---- finish shell initialization ----
+
+* Close the ShellAndroid if you never need it.(like the example close the shell on the onDestory method in activity)
+
+		protected void onDestroy() {
+			// TODO Auto-generated method stub
+			super.onDestroy();
+			if (mShell != null){
+				mShell.close();
+			}
+		}
+
+* **Execute shell command in a work thread.**
+* If you want get root permission, the best way is use the shell methods.
+
+		shell.checkRoot()	// try to get root permission
+		shell.hasRoot()	// Is it the root user now
+		shell.exitRoot()	// exit root user, even if you execute su command many times.
+
 
 Bug
 ---
 
 * Some commands makes the shell unable to work. The known commands below(They almost are interactive commands):
 	
-	if
-	wc
+		if
+		wc

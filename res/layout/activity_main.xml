@@ -28,5 +28,55 @@
         android:layout_below="@+id/edit"
         android:text="Execute"
         />
+    
+    <LinearLayout 
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@+id/execute"
+        >
+        
+        <LinearLayout 
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
+            
+            <Button android:id="@+id/check_root"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="128dp"
+                android:text="CheckRoot"
+                />
+            
+            <TextView android:id="@+id/check_root_result"
+                android:layout_width="wrap_content"
+               	android:layout_height="wrap_content"
+               	android:text="check root"
+                />
+            
+        </LinearLayout>
+        
+        <LinearLayout 
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
+            
+            <Button android:id="@+id/exit_root"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="128dp"
+                android:text="ExitRoot"
+                />
+            
+            <TextView android:id="@+id/exit_root_result"
+                android:layout_width="wrap_content"
+               	android:layout_height="wrap_content" 
+               	android:text="exit root"
+                />
+            
+        </LinearLayout>
+    </LinearLayout>
 
 </RelativeLayout>

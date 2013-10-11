@@ -4,11 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import z.hol.shellandroid.utils.AssetUtils;
 import z.hol.shellandroid.utils.ShellUtils;
 import android.content.Context;
 import android.os.FileObserver;
+import android.text.TextUtils;
+import android.util.Log;
 
 /**
  * A Shell of android
@@ -16,10 +19,13 @@ import android.os.FileObserver;
  *
  */
 public class ShellAndroid implements Shell{
+	public static final String TAG = "ShellAndroid";
+	
 	public static final String CFLAG_TOOL_FILE_NAME = "cflag";
 	public static final String FLAG_FILE_NAME = "flag_file";
 	public static final int STILL_RUNNING = -1024;
 	public static final int PROCESS_NEVER_CREATED = -18030;
+	public static final int UNKNOWN_USER_ID = -1024;
 
 	private Process mProcess; 
 	private InputStream mReadStream, mErrorStream;
@@ -33,8 +39,10 @@ public class ShellAndroid implements Shell{
 	private byte[] mLock = new byte[0];
 	
 	private StringBuilder mLastResultBuilder = new StringBuilder(512);
-	
 	private String mLastResult = null;
+	
+	private AtomicBoolean mHasRoot = new AtomicBoolean(false);
+
 	
 	public ShellAndroid(){
 		init();
@@ -109,7 +117,7 @@ public class ShellAndroid implements Shell{
 				e.printStackTrace();
 			}
 			mProcess.destroy();
-			System.out.println("**Shell destroyed**");
+			Log.d(TAG, "**Shell destroyed**");
 		}
 		if (mTerminalObserver != null){
 			mTerminalObserver.stopWatching();
@@ -130,19 +138,51 @@ public class ShellAndroid implements Shell{
 	@Override
 	public void checkRoot() {
 		// TODO Auto-generated method stub
-		
+		if (!mHasRoot.get()){
+			int id = checkId();
+			if (id == 0){
+				mHasRoot.set(true);
+				return;
+			}
+			execute("su");
+			id = checkId();
+			if (id == 0){
+				mHasRoot.set(true);
+			}
+		}
 	}
 
 	@Override
 	public boolean hasRoot() {
 		// TODO Auto-generated method stub
-		return false;
+		return mHasRoot.get();
 	}
 
 	@Override
 	public boolean exitRoot() {
 		// TODO Auto-generated method stub
+		if (hasRoot()){
+			execute("exit");
+			if (checkId() == 0){
+				// still root shell,
+				// so exit it
+				return exitRoot();
+			}
+			mHasRoot.set(false);
+			return true;
+		}
 		return false;
+	}
+	
+	private int checkId(){
+		execute("id");
+		final String idStr = getLastResult();
+		if (!TextUtils.isEmpty(idStr) && idStr.startsWith("uid=")){
+			int endPos = idStr.indexOf('(');
+			int id = Integer.valueOf(idStr.substring(4, endPos));
+			return id;
+		}
+		return UNKNOWN_USER_ID;
 	}
 	
 	/**
@@ -152,7 +192,7 @@ public class ShellAndroid implements Shell{
 	private void execute(String... cmds){
 		for (int i = 0; i < cmds.length; i ++){
 			String cmd = cmds[i];
-			System.out.println("cmd: " + cmd);
+			Log.d(TAG, "cmd: " + cmd);
 			byte[] rawCmd = cmd.getBytes();
 			
 			// clean the result for new command
@@ -210,13 +250,12 @@ public class ShellAndroid implements Shell{
 				e.printStackTrace();
 			}
 			
-			System.out.println("**over**");
+			Log.d(TAG, "**over**");
 		}
 		
 		private void printBuff(byte[] buff, int length){
 			String buffStr = new String(buff, 0, length);
-			System.out.print("~:");
-			System.out.print(buffStr);
+			Log.d(TAG,"~:" + buffStr);
 			mLastResultBuilder.append(buffStr);
 		}
 	}
@@ -250,7 +289,7 @@ public class ShellAndroid implements Shell{
 		@Override
 		public void onEvent(int event, String path) {
 			// TODO Auto-generated method stub
-			//System.out.println(mWatchedFile + " opened");
+			//Log.d(TAG, mWatchedFile + " opened");
 			mLastResult = mLastResultBuilder.toString();
 			synchronized (mLock) {
 				mLock.notify();
