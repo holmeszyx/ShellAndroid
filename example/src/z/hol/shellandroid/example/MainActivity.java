@@ -1,5 +1,6 @@
-package z.hol.shellandroid;
+package z.hol.shellandroid.example;
 
+import z.hol.shellandroid.ShellAndroid;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
