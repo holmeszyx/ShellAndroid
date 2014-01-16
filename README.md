@@ -40,6 +40,12 @@ How to use
 		}
 
 * **Execute shell command in a work thread.**
+* Get command result by getLastResult() in ShellAndroid.(more details are in example)
+
+        mShell.exec("cd /sdcard");
+        mShell.exec("pwd");
+        mShell.getLastResult(); // pwd result, return "/sdcard"
+        
 * If you want get root permission, the best way is use the shell methods.
 
 		shell.checkRoot()	// try to get root permission

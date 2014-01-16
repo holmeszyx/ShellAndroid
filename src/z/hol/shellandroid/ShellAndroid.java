@@ -230,6 +230,9 @@ public class ShellAndroid implements Shell {
         }
     }
 
+    /**
+     * Start collect command out put result
+     */
     public void printOutput() {
         Thread thread = new Thread(new OutputRunnable());
         thread.start();
@@ -307,6 +310,10 @@ public class ShellAndroid implements Shell {
 
     }
 
+    /**
+     * Get last command result
+     * @return
+     */
     public String getLastResult() {
         return mLastResult;
     }
