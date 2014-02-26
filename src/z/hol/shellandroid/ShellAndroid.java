@@ -20,6 +20,7 @@ import android.util.Log;
  * 
  */
 public class ShellAndroid implements Shell {
+    public static boolean DEBUG = true;
     public static final String TAG = "ShellAndroid";
 
     public static final String CFLAG_TOOL_FILE_NAME = "cflag";
@@ -44,6 +45,8 @@ public class ShellAndroid implements Shell {
 
     private AtomicBoolean mHasRoot = new AtomicBoolean(false);
 
+    private IdContext mIdContext;
+    
     public ShellAndroid() {
         init();
     }
@@ -142,13 +145,13 @@ public class ShellAndroid implements Shell {
         // TODO Auto-generated method stub
         if (!mHasRoot.get()) {
             int id = checkId();
-            if (id == 0) {
+            if (id == 0 && (mIdContext == null || mIdContext.isRootRole())) {
                 mHasRoot.set(true);
                 return;
             }
             execute("su");
             id = checkId();
-            if (id == 0) {
+            if (id == 0 && (mIdContext == null || mIdContext.isRootRole())) {
                 mHasRoot.set(true);
             }
         }
@@ -186,9 +189,40 @@ public class ShellAndroid implements Shell {
         if (!TextUtils.isEmpty(idStr) && idStr.startsWith("uid=")) {
             int endPos = idStr.indexOf('(');
             int id = Integer.valueOf(idStr.substring(4, endPos));
+            
+            // for SELinux
+            // Text "context=u:r:init:s0" at last of idStr
+            int contextPos = idStr.lastIndexOf("context=");
+            if (contextPos > -1){
+                // SELinux
+                int contextEnd = idStr.indexOf(' ', contextPos);
+                String contextStr;
+                if (contextEnd == -1){
+                    contextStr = idStr.substring(contextPos + 8);
+                }else{
+                    contextStr = idStr.substring(contextPos + 8,  contextEnd);
+                }
+                if (DEBUG) Log.d(TAG, "" + contextStr);
+                if (mIdContext == null){
+                    mIdContext = new IdContext(contextStr);
+                }else{
+                    mIdContext.update(contextStr);
+                }
+                
+                //if (DEBUG) Log.d(TAG, String.format("u:%s, r:%s, role:%s, s:%s", 
+                //        mIdContext.getU(), mIdContext.getR(), mIdContext.getRoll(), mIdContext.getS()));
+            }
             return id;
         }
         return UNKNOWN_USER_ID;
+    }
+    
+    /**
+     * Get id context, may null if no in SELinux
+     * @return
+     */
+    public IdContext getIdContext(){
+        return mIdContext;
     }
 
     /**
@@ -199,7 +233,7 @@ public class ShellAndroid implements Shell {
     private void execute(String... cmds) {
         for (int i = 0; i < cmds.length; i++) {
             String cmd = cmds[i];
-            Log.d(TAG, "cmd: " + cmd);
+            if (DEBUG) Log.d(TAG, "cmd: " + cmd);
             byte[] rawCmd = cmd.getBytes();
 
             // clean the result for new command
@@ -266,7 +300,7 @@ public class ShellAndroid implements Shell {
 
         private void printBuff(byte[] buff, int length) {
             String buffStr = new String(buff, 0, length);
-            Log.d(TAG, "~:" + buffStr);
+            if (DEBUG) Log.d(TAG, "~:" + buffStr);
             mLastResultBuilder.append(buffStr);
         }
     }

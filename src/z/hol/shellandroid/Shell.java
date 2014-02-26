@@ -6,6 +6,57 @@ package z.hol.shellandroid;
  *
  */
 public interface Shell {
+    
+    /**
+     * The context data in result of "id" command
+     * e.g  uid=0(root) context=u:r:init:s0
+     * @author holmes
+     *
+     */
+    public static class IdContext{
+        public static final String ROOT_ROLL = "init".intern();
+        
+        String u;
+        String r;
+        String role;
+        String s;
+        
+        IdContext(String contextStr) {
+            update(contextStr);
+        }
+        
+        /**
+         * update informations
+         * @param contextStr
+         */
+        void update(String contextStr){
+            String[] splited = contextStr.split(":");
+            u = splited[0];
+            r = splited[1];
+            role = splited[2].intern();
+            s = splited[3];
+        }
+
+        public String getU() {
+            return u;
+        }
+
+        public String getR() {
+            return r;
+        }
+
+        public String getRole() {
+            return role;
+        }
+
+        public String getS() {
+            return s;
+        }
+        
+        public boolean isRootRole(){
+            return ROOT_ROLL.equals(role);
+        }
+    }
 
 
 	/**
