@@ -35,6 +35,7 @@ public class ShellAndroid implements Shell {
     private String mFlagFile;
     private String mFlagTrigger;
     private String mFlagCmd;
+    private byte[] mCmdSeparator;
 
     private CmdTerminalObserver mTerminalObserver;
 
@@ -48,6 +49,7 @@ public class ShellAndroid implements Shell {
     private IdContext mIdContext;
     
     public ShellAndroid() {
+        mCmdSeparator = "; ".getBytes();
         init();
     }
 
@@ -242,9 +244,10 @@ public class ShellAndroid implements Shell {
 
             try {
                 mWriteStream.write(rawCmd);
-                mWriteStream.write(10);
-                mWriteStream.flush();
+                //mWriteStream.write(10);
+                //mWriteStream.flush();
 
+                mWriteStream.write(mCmdSeparator);
                 mWriteStream.write(mFlagCmd.getBytes());
                 mWriteStream.write(10);
                 mWriteStream.flush();
