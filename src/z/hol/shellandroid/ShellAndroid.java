@@ -244,19 +244,23 @@ public class ShellAndroid implements Shell {
 
             try {
                 mWriteStream.write(rawCmd);
-                mWriteStream.write(10);
+                //mWriteStream.write(10);
                 //mWriteStream.flush();
+                
+                // we will target notify flag twice
+                // 1. for cmd terminal
+                mWriteStream.write(mCmdSeparator);
                 mWriteStream.write(mFlagCmd.getBytes());
                 mWriteStream.write(10);
                 mWriteStream.flush();
 
-                //mWriteStream.write(mCmdSeparator);
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
                     // It is Auto-generated catch block
                     e.printStackTrace();
                 }
+                // 2. for the pipe of sh or su
                 mWriteStream.write(mFlagCmd.getBytes());
                 mWriteStream.write(10);
                 mWriteStream.flush();
