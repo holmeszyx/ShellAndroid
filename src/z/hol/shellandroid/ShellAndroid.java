@@ -244,10 +244,19 @@ public class ShellAndroid implements Shell {
 
             try {
                 mWriteStream.write(rawCmd);
-                //mWriteStream.write(10);
+                mWriteStream.write(10);
                 //mWriteStream.flush();
+                mWriteStream.write(mFlagCmd.getBytes());
+                mWriteStream.write(10);
+                mWriteStream.flush();
 
-                mWriteStream.write(mCmdSeparator);
+                //mWriteStream.write(mCmdSeparator);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    // It is Auto-generated catch block
+                    e.printStackTrace();
+                }
                 mWriteStream.write(mFlagCmd.getBytes());
                 mWriteStream.write(10);
                 mWriteStream.flush();
