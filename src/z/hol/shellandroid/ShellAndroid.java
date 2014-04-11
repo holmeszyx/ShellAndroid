@@ -48,9 +48,16 @@ public class ShellAndroid implements Shell {
 
     private IdContext mIdContext;
     
+    /**  */
+    private boolean mCheckSu = true;
+    
     public ShellAndroid() {
         mCmdSeparator = "; ".getBytes();
         init();
+    }
+    
+    public void setCheckSu(boolean check){
+        mCheckSu = check;
     }
 
     /**
@@ -151,7 +158,9 @@ public class ShellAndroid implements Shell {
                 mHasRoot.set(true);
                 return;
             }
-            execute("su");
+            if (mCheckSu){
+                execute("su");
+            }
             id = checkId();
             if (id == 0 && (mIdContext == null || mIdContext.isRootRole())) {
                 mHasRoot.set(true);
