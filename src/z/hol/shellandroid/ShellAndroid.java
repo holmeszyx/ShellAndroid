@@ -108,7 +108,9 @@ public class ShellAndroid implements Shell {
     private void init() {
         String initCommand = "/system/bin/sh";
         try {
-            Process process = new ProcessBuilder(initCommand).redirectErrorStream(true).start();
+        	ProcessBuilder pb =  new ProcessBuilder(initCommand).redirectErrorStream(true);
+        	pb.directory(new File("/"));
+            Process process = pb.start();
             mProcess = process;
             mReadStream = process.getInputStream();
             mErrorStream = process.getErrorStream();
@@ -328,7 +330,7 @@ public class ShellAndroid implements Shell {
             if (DEBUG) Log.d(TAG, "~:" + buffStr);
             mLastResultBuilder.append(buffStr);
         }
-    }
+    } 
 
     public int getExitValue() {
         if (mProcess != null) {
