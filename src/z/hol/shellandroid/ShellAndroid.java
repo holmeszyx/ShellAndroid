@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import z.hol.shellandroid.exception.ShellExecuteException;
 import z.hol.shellandroid.utils.AssetUtils;
 import z.hol.shellandroid.utils.ShellUtils;
 import android.content.Context;
@@ -50,6 +51,8 @@ public class ShellAndroid implements Shell {
     
     /**  */
     private boolean mCheckSu = true;
+    /** Its closed */
+    private boolean mIsClosed = false;
     
     public ShellAndroid() {
         mCmdSeparator = "; ".getBytes();
@@ -119,6 +122,7 @@ public class ShellAndroid implements Shell {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        mIsClosed = false;
     }
 
     @Override
@@ -141,7 +145,14 @@ public class ShellAndroid implements Shell {
         synchronized (mLock) {
             mLock.notifyAll();
         }
+        mIsClosed = true;
         return true;
+    }
+    
+    @Override
+    public boolean isClosed() {
+    	// This is Auto-generated method stub
+    	return mIsClosed;
     }
 
     @Override
@@ -277,7 +288,7 @@ public class ShellAndroid implements Shell {
                 mWriteStream.flush();
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                throw new ShellExecuteException("Input cmd error, Shell maybe closed. cmd: " + cmd, e);
             }
 
             synchronized (mLock) {
@@ -296,6 +307,7 @@ public class ShellAndroid implements Shell {
      */
     public void printOutput() {
         Thread thread = new Thread(new OutputRunnable());
+        thread.setName("Shell output");
         thread.start();
     }
 

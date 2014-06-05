@@ -1,5 +1,7 @@
 package z.hol.shellandroid;
 
+import z.hol.shellandroid.exception.ShellExecuteException;
+
 /**
  * A shell
  * @author holmes
@@ -64,6 +66,7 @@ public interface Shell {
 	 * execute shell command
 	 * @param asRoot
 	 * @param arrParam
+	 * @exception ShellExecuteException
 	 */
 	public boolean exec(boolean asRoot, String... arrParam);
 	
@@ -89,4 +92,10 @@ public interface Shell {
 	 * @return
 	 */
 	public boolean close();
+	
+	/**
+	 * It's closed
+	 * @return
+	 */
+	public boolean isClosed();
 }
