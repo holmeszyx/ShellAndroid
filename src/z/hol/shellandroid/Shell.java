@@ -33,11 +33,30 @@ public interface Shell {
          * @param contextStr
          */
         void update(String contextStr){
+            clean();
             String[] splited = contextStr.split(":");
-            u = splited[0];
-            r = splited[1];
-            role = splited[2].intern();
-            s = splited[3];
+            if (splited != null){
+            	int len = splited.length;
+            	if (len > 0){
+            		u = splited[0];
+            	}
+            	if (len > 1){
+            		r = splited[1];
+            	}
+            	if (len > 2){
+            		role = splited[2].intern();
+            	}
+            	if (len > 3){
+            		s = splited[3];
+            	}
+            }
+        }
+        
+        void clean(){
+        	u = null;
+        	r = null;
+        	role = null;
+        	s = null;
         }
 
         public String getU() {
