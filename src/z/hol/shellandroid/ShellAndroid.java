@@ -210,9 +210,50 @@ public class ShellAndroid implements Shell {
     public int checkId() {
         execute("id");
         final String idStr = getLastResult();
-        if (!TextUtils.isEmpty(idStr) && idStr.startsWith("uid=")) {
+        if (!TextUtils.isEmpty(idStr) 
+        		&& idStr.startsWith("uid=")
+        		&& idStr.length() > 4) {
+        	// uid=0(root) gid=0(root)
             int endPos = idStr.indexOf('(');
-            int id = Integer.valueOf(idStr.substring(4, endPos));
+            int id;
+            if (endPos != -1){
+            	try {
+					id = Integer.valueOf(idStr.substring(4, endPos));
+				} catch (NumberFormatException e) {
+					// This is Auto-generated catch block
+					e.printStackTrace();
+					id = UNKNOWN_USER_ID;
+				}
+            }else{
+            	// if "(" can not found.
+            	// so try to found first char which no a digit
+            	final int len = idStr.length();
+            	int firstNoDigit = -1;
+            	for (int i = 4; i < len; i ++){
+            		char ic = idStr.charAt(i);
+            		if (!Character.isDigit(ic)){
+            			firstNoDigit = i;
+            			break;
+            		}
+            	}
+            	if (firstNoDigit != -1){
+            		try {
+						id = Integer.valueOf(idStr.substring(4, firstNoDigit));
+					} catch (NumberFormatException e) {
+						// This is Auto-generated catch block
+						e.printStackTrace();
+						id = UNKNOWN_USER_ID;
+					}
+            	}else{
+            		try {
+						id = Integer.valueOf(idStr.substring(4));
+					} catch (NumberFormatException e) {
+						// This is Auto-generated catch block
+						e.printStackTrace();
+						id = UNKNOWN_USER_ID;
+					}
+            	}
+            }
             
             // for SELinux
             // Text "context=u:r:init:s0" at last of idStr
@@ -322,16 +363,20 @@ public class ShellAndroid implements Shell {
         @Override
         public void run() {
             // TODO Auto-generated method stub
-            InputStream input = mReadStream;
-            byte[] buff = new byte[4096];
-            int readed = -1;
-            try {
-                while ((readed = input.read(buff)) > 0) {
-                    printBuff(buff, readed);
-                }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+        	InputStream input = mReadStream;
+            if (input != null){
+            	byte[] buff = new byte[4096];
+            	int readed = -1;
+            	try {
+            		while ((readed = input.read(buff)) > 0) {
+            			printBuff(buff, readed);
+            		}
+            	} catch (IOException e) {
+            		// TODO Auto-generated catch block
+            		e.printStackTrace();
+            	}
+            }else{
+            	Log.e(TAG, "Shell process may not created, InputStream is null");
             }
 
             Log.d(TAG, "**over**");
