@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import z.hol.shellandroid.exception.ShellExecuteException;
 import z.hol.shellandroid.utils.AssetUtils;
-import z.hol.shellandroid.utils.ShellUtils;
 import android.content.Context;
 import android.os.FileObserver;
 import android.text.TextUtils;
@@ -54,9 +53,28 @@ public class ShellAndroid implements Shell {
     /** Its closed */
     private boolean mIsClosed = false;
     
-    public ShellAndroid() {
+    private Chmod mChmod;
+    
+    /**
+     * Construct
+     * @param chmod use to change cflag mode, 
+     * 		  if it it null, the {@link DefaultChmod} will be used
+     */
+    public ShellAndroid(Chmod chmod) {
         mCmdSeparator = "; ".getBytes();
+        if (chmod == null){
+        	chmod = new DefaultChmod();
+        }
+        mChmod = chmod;
         init();
+    }
+    
+    /**
+     * Get current {@link Chmod} implementation associate with this Shell
+     * @return
+     */
+    public Chmod getChmod(){
+    	return mChmod;
     }
     
     public void setCheckSu(boolean check){
@@ -89,7 +107,7 @@ public class ShellAndroid implements Shell {
         }
         File cFlag = context.getFileStreamPath(CFLAG_TOOL_FILE_NAME);
         mFlagTrigger = cFlag.getAbsolutePath();
-        ShellUtils.setChmod(mFlagTrigger, "770");
+        mChmod.setChmod(mFlagTrigger, "770");
         return flagFile.getAbsolutePath();
     }
 

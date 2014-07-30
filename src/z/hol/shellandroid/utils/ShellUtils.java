@@ -31,6 +31,11 @@ public class ShellUtils {
 			if (ShellAndroid.DEBUG){
 				Log.d("ShellAndroid", "chmod over " + file + " mode " + mode);
 			}
+			
+			process.waitFor();
+			
+			process.destroy();
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
