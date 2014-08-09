@@ -63,7 +63,7 @@ public class ShellAndroid implements Shell {
     public ShellAndroid(Chmod chmod) {
         mCmdSeparator = "; ".getBytes();
         if (chmod == null){
-        	chmod = new DefaultChmod();
+        	chmod = new DefaultChmod(this);
         }
         mChmod = chmod;
         init();
@@ -94,7 +94,6 @@ public class ShellAndroid implements Shell {
             try {
                 flagFile.createNewFile();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -102,12 +101,11 @@ public class ShellAndroid implements Shell {
         try {
             AssetUtils.extractAsset(context, CFLAG_TOOL_FILE_NAME, true);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         File cFlag = context.getFileStreamPath(CFLAG_TOOL_FILE_NAME);
         mFlagTrigger = cFlag.getAbsolutePath();
-        mChmod.setChmod(mFlagTrigger, "770");
+        mChmod.setChmod(mFlagTrigger, "777");
         return flagFile.getAbsolutePath();
     }
 
@@ -306,6 +304,34 @@ public class ShellAndroid implements Shell {
      */
     public IdContext getIdContext(){
         return mIdContext;
+    }
+
+    /**
+     * change file mode.
+     * it probably only be used for chmod 777 cflg;
+     * @param file
+     * @param mode
+     */
+    void chmodWithSh(String file, String mode){
+        String cmd = "chmod " + mode + " " + file;
+        byte[] rawCmd = cmd.getBytes();
+
+        try {
+            mWriteStream.write(rawCmd);
+
+            mWriteStream.write(10);
+            mWriteStream.flush();
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // It is Auto-generated catch block
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            throw new ShellExecuteException("Input cmd error, Shell maybe closed. cmd: " + cmd, e);
+        }
     }
 
     /**
