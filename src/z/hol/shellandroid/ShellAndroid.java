@@ -24,6 +24,7 @@ public class ShellAndroid implements Shell {
     public static final String TAG = "ShellAndroid";
 
     public static final String CFLAG_TOOL_FILE_NAME = "cflag";
+    public static final String CFLAG_TOOL_X86_FILE_NAME = "cflag_x86";
     public static final String FLAG_FILE_NAME = "flag_file";
     public static final int STILL_RUNNING = -1024;
     public static final int PROCESS_NEVER_CREATED = -18030;
@@ -52,6 +53,8 @@ public class ShellAndroid implements Shell {
     private boolean mCheckSu = true;
     /** Its closed */
     private boolean mIsClosed = false;
+    /** block mode */
+    private boolean mIsInBlockMode = true;
     
     private Chmod mChmod;
     
@@ -98,12 +101,22 @@ public class ShellAndroid implements Shell {
             }
         }
 
+        int cpuType = Cpu.getCpuType();
+        final String cflagName;
+        if (cpuType == Cpu.CPU_INTEL){
+            cflagName = CFLAG_TOOL_X86_FILE_NAME;
+        }else{
+            cflagName = CFLAG_TOOL_FILE_NAME;
+        }
+
         try {
-            AssetUtils.extractAsset(context, CFLAG_TOOL_FILE_NAME, true);
+            AssetUtils.extractAsset(context, cflagName, true);
         } catch (IOException e) {
             e.printStackTrace();
+            // extra cflag error, so don't block the sh
+            mIsInBlockMode = false;
         }
-        File cFlag = context.getFileStreamPath(CFLAG_TOOL_FILE_NAME);
+        File cFlag = context.getFileStreamPath(cflagName);
         mFlagTrigger = cFlag.getAbsolutePath();
         mChmod.setChmod(mFlagTrigger, "777");
         return flagFile.getAbsolutePath();
@@ -139,6 +152,15 @@ public class ShellAndroid implements Shell {
             e.printStackTrace();
         }
         mIsClosed = false;
+    }
+
+    /**
+     * Block mode. only in block mode, can get cmds result.
+     * @see {@link #getLastResult()}
+     * @return
+     */
+    public boolean isInBlockMode(){
+        return mIsInBlockMode;
     }
 
     @Override
@@ -380,12 +402,14 @@ public class ShellAndroid implements Shell {
                 throw new ShellExecuteException("Input cmd error, Shell maybe closed. cmd: " + cmd, e);
             }
 
-            synchronized (mLock) {
-                try {
-                    mLock.wait();
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+            if (mIsInBlockMode){
+                synchronized (mLock) {
+                    try {
+                        mLock.wait();
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
                 }
             }
         }

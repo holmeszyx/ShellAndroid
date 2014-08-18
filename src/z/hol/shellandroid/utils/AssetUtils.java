@@ -39,8 +39,6 @@ public class AssetUtils {
 		File fileDir = context.getFilesDir();
 		File f = new File(fileDir, fileName);
 		boolean exist = f.exists();
-		f = null;
-		fileDir = null;
-		return exist;
+        return exist;
 	}
 }
