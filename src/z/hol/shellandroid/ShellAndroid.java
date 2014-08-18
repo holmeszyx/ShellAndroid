@@ -225,8 +225,12 @@ public class ShellAndroid implements Shell {
      */
     public int checkId() {
         execute("id");
-        final String idStr = getLastResult();
-        if (!TextUtils.isEmpty(idStr) 
+        String idStrOrigin = getLastResult();
+        if (idStrOrigin  != null){
+            idStrOrigin = idStrOrigin.trim();
+        }
+        final String idStr = idStrOrigin;
+        if (!TextUtils.isEmpty(idStr)
         		&& idStr.startsWith("uid=")
         		&& idStr.length() > 4) {
         	// uid=0(root) gid=0(root)
