@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import z.hol.shellandroid.exception.ShellExecuteException;
 import z.hol.shellandroid.utils.AssetUtils;
@@ -29,6 +30,8 @@ public class ShellAndroid implements Shell {
     public static final int STILL_RUNNING = -1024;
     public static final int PROCESS_NEVER_CREATED = -18030;
     public static final int UNKNOWN_USER_ID = -1024;
+
+    private static final AtomicInteger FLAG_ID = new AtomicInteger(0);
 
     private Process mProcess;
     private InputStream mReadStream, mErrorStream;
@@ -92,7 +95,7 @@ public class ShellAndroid implements Shell {
      */
     public String initFlag(Context context) {
 
-        File flagFile = context.getFileStreamPath(FLAG_FILE_NAME);
+        File flagFile = context.getFileStreamPath(FLAG_FILE_NAME + FLAG_ID.incrementAndGet());
         if (!flagFile.exists()) {
             try {
                 flagFile.createNewFile();
@@ -178,7 +181,11 @@ public class ShellAndroid implements Shell {
             Log.d(TAG, "**Shell destroyed**");
         }
         if (mTerminalObserver != null) {
+            // if has multi instance, the observer
+            // will invalid for one of instance closeed
             mTerminalObserver.stopWatching();
+            //mTerminalObserver.close();
+            //mTerminalObserver = null;
         }
         synchronized (mLock) {
             mLock.notifyAll();
@@ -482,6 +489,8 @@ public class ShellAndroid implements Shell {
         @SuppressWarnings("unused")
         protected final String mWatchedFile;
 
+        private boolean mIsClosed = false;
+
         public CmdTerminalObserver(String file) {
             super(file, OPEN);
             // TODO Auto-generated constructor stub
@@ -490,12 +499,21 @@ public class ShellAndroid implements Shell {
 
         @Override
         public void onEvent(int event, String path) {
-            // TODO Auto-generated method stub
+            if (mIsClosed){
+                return;
+            }
             // Log.d(TAG, mWatchedFile + " opened");
             mLastResult = mLastResultBuilder.toString();
             synchronized (mLock) {
                 mLock.notify();
             }
+        }
+
+        /**
+         * Close. for multi ShellAndroid instance
+         */
+        public void close(){
+            mIsClosed = true;
         }
 
     }
