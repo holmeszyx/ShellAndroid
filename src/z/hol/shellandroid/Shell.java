@@ -18,6 +18,7 @@ public interface Shell {
     public static class IdContext{
         public static final String ROOT_ROLE = "init".intern();
         public static final String KERNEL_ROLE = "kernel".intern();
+        public static final String TOOLBOX_ROLE = "toolbox".intern();
         
         String u;
         String r;
@@ -76,7 +77,8 @@ public interface Shell {
         }
         
         public boolean isRootRole(){
-            return ROOT_ROLE.equals(role) || KERNEL_ROLE.equals(role);
+            return ROOT_ROLE.equals(role) || KERNEL_ROLE.equals(role)
+                    || TOOLBOX_ROLE.equals(role);
         }
     }
 

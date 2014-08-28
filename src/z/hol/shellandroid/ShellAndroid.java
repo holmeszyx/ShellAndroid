@@ -60,6 +60,9 @@ public class ShellAndroid implements Shell {
     private boolean mIsInBlockMode = true;
     
     private Chmod mChmod;
+
+    /** cmd exec timeout */
+    private long mWaitTimeout = 0l;
     
     /**
      * Construct
@@ -67,7 +70,7 @@ public class ShellAndroid implements Shell {
      * 		  if it it null, the {@link DefaultChmod} will be used
      */
     public ShellAndroid(Chmod chmod) {
-        mCmdSeparator = "; ".getBytes();
+        mCmdSeparator = " ; ".getBytes();
         if (chmod == null){
         	chmod = new DefaultChmod(this);
         }
@@ -85,6 +88,18 @@ public class ShellAndroid implements Shell {
     
     public void setCheckSu(boolean check){
         mCheckSu = check;
+    }
+
+    /**
+     * Set cmd wait timeout.
+     * @param timeout 0 always wait.
+     */
+    public void setWaitTimeout(long timeout){
+        mWaitTimeout = timeout;
+    }
+
+    public long getWaitTimeout(){
+        return mWaitTimeout;
     }
 
     /**
@@ -168,6 +183,8 @@ public class ShellAndroid implements Shell {
 
     @Override
     public boolean close() {
+        mIsClosed = true;
+
         if (mProcess != null) {
             try {
                 mReadStream.close();
@@ -190,7 +207,6 @@ public class ShellAndroid implements Shell {
         synchronized (mLock) {
             mLock.notifyAll();
         }
-        mIsClosed = true;
         return true;
     }
     
@@ -412,7 +428,11 @@ public class ShellAndroid implements Shell {
             if (mIsInBlockMode){
                 synchronized (mLock) {
                     try {
-                        mLock.wait();
+                        if (mWaitTimeout > 0){
+                            mLock.wait(mWaitTimeout);
+                        }else {
+                            mLock.wait();
+                        }
                     } catch (InterruptedException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
@@ -456,6 +476,12 @@ public class ShellAndroid implements Shell {
             	}
             }else{
             	Log.e(TAG, "Shell process may not created, InputStream is null");
+            }
+
+            if (!mIsClosed){
+                // if no close
+                // so some exception happend with sh
+                close();
             }
 
             Log.d(TAG, "**over**");
