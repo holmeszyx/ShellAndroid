@@ -38,7 +38,7 @@ public class MainActivity extends Activity implements OnClickListener{
 		findViewById(R.id.exit_root).setOnClickListener(this);
 		
 		//---- shell initialization ----
-		mShell = new ShellAndroid();
+		mShell = new ShellAndroid(null);
 		String flagFile = mShell.initFlag(getApplicationContext());
 		mShell.printOutput();
 		mShell.setFlagFile(flagFile);

@@ -390,7 +390,8 @@ public class ShellAndroid implements Shell {
      */
     private void execute(String... cmds) {
         for (int i = 0; i < cmds.length; i++) {
-            String cmd = cmds[i];
+            String cmd = cmds[i].trim();
+            cmd = filterCmdEndChars(cmd);
             if (DEBUG) Log.d(TAG, "cmd: " + cmd);
             byte[] rawCmd = cmd.getBytes();
 
@@ -440,6 +441,21 @@ public class ShellAndroid implements Shell {
                 }
             }
         }
+    }
+    
+    /**
+     * filter some chars end of cmd.
+     * like ";"
+     * @return
+     */
+    private String filterCmdEndChars(String cmd){
+    	int len = cmd.length();
+    	if (len > 0 && cmd.lastIndexOf(';') == len - 1){
+    		String c = cmd.substring(0, len - 1);
+    		c = c.trim();
+    		return filterCmdEndChars(c);
+    	}
+    	return cmd;
     }
 
     /**
