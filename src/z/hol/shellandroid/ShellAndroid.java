@@ -139,6 +139,32 @@ public class ShellAndroid implements Shell {
         mChmod.setChmod(mFlagTrigger, "777");
         return flagFile.getAbsolutePath();
     }
+    
+    /**
+     * initialize command terminal flag tool
+     * with exist cflag
+     * @param context
+     * @param cflag a exist cflag
+     * @return
+     */
+    public String initFlag(Context context, File cFlag){
+        File flagFile = context.getFileStreamPath(FLAG_FILE_NAME + FLAG_ID.incrementAndGet());
+        if (!flagFile.exists()) {
+            try {
+                flagFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (cFlag != null){
+        	mFlagTrigger = cFlag.getAbsolutePath();
+        }else{
+        	mIsInBlockMode = false;
+        }
+        mChmod.setChmod(mFlagTrigger, "777");
+        return flagFile.getAbsolutePath();
+    }
 
     /**
      * set command terminal flag file, which triggered by flag tool
@@ -194,7 +220,11 @@ public class ShellAndroid implements Shell {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            mProcess.destroy();
+            try {
+				mProcess.destroy();
+			} catch (Exception e) {
+				// This is Auto-generated catch block
+			}
             Log.d(TAG, "**Shell destroyed**");
         }
         if (mTerminalObserver != null) {
