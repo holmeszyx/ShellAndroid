@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import z.hol.shellandroid.exception.ShellExecuteException;
-import z.hol.shellandroid.utils.AssetUtils;
 import android.content.Context;
 import android.os.FileObserver;
 import android.text.TextUtils;
@@ -106,9 +105,13 @@ public class ShellAndroid implements Shell {
      * initialize command terminal flag tool
      * 
      * @param context
+     * @throws NullPointerException if context is null
      * @return
      */
     public String initFlag(Context context) {
+    	if (context == null){
+    		throw new NullPointerException("context can not be null");
+    	}
 
         File flagFile = context.getFileStreamPath(FLAG_FILE_NAME + FLAG_ID.incrementAndGet());
         if (!flagFile.exists()) {
@@ -119,24 +122,27 @@ public class ShellAndroid implements Shell {
             }
         }
 
-        int cpuType = Cpu.getCpuType();
-        final String cflagName;
-        if (cpuType == Cpu.CPU_INTEL){
-            cflagName = CFLAG_TOOL_X86_FILE_NAME;
+        File cFlag = null;
+        AbsReleaser releaser = CFlagRelease.getReleaser(context);
+        if (releaser != null){
+            try {
+                cFlag = releaser.release();
+            } catch (Exception e) {
+                e.printStackTrace();
+                mIsInBlockMode = false;
+            }
         }else{
-            cflagName = CFLAG_TOOL_FILE_NAME;
-        }
-
-        try {
-            AssetUtils.extractAsset(context, cflagName, true);
-        } catch (IOException e) {
-            e.printStackTrace();
-            // extra cflag error, so don't block the sh
             mIsInBlockMode = false;
         }
-        File cFlag = context.getFileStreamPath(cflagName);
-        mFlagTrigger = cFlag.getAbsolutePath();
-        mChmod.setChmod(mFlagTrigger, "777");
+        if (cFlag != null){
+            mFlagTrigger = cFlag.getAbsolutePath();
+            mChmod.setChmod(mFlagTrigger, "777");
+        }else if (releaser != null){
+            String cflagName = releaser.getCFlagName();
+            cFlag = context.getFileStreamPath(cflagName);
+            mFlagTrigger = cFlag.getAbsolutePath();
+            mChmod.setChmod(mFlagTrigger, "777");
+        }
         return flagFile.getAbsolutePath();
     }
     
