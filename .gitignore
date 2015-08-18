@@ -29,3 +29,7 @@ proguard/
 .idea/
 /build/
 /.settings/
+obj/
+.gradle/
+example/assets/
+example/build/

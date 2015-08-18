@@ -1,6 +1,5 @@
 package z.hol.shellandroid.example;
 
-import z.hol.shellandroid.ShellAndroid;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -11,6 +10,9 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import z.hol.shellandroid.ShellAndroid;
 
 /**
  * The example activity, and also for test
@@ -22,6 +24,7 @@ public class MainActivity extends Activity implements OnClickListener{
 	private TextView txtResult, txtCheckRoot, txtExitRoot;
 	private EditText edtCmd;
 	private ShellAndroid mShell;
+	private boolean mUseMinimum = true;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +42,13 @@ public class MainActivity extends Activity implements OnClickListener{
 		
 		//---- shell initialization ----
 		mShell = new ShellAndroid(null);
-		String flagFile = mShell.initFlag(getApplicationContext());
+		String flagFile;
+		if (!mUseMinimum){
+			flagFile = mShell.initFlag(getApplicationContext());
+		}else {
+			flagFile = mShell.initFlagMinimum(getApplicationContext());
+			Toast.makeText(this, "Use minimum init flag", Toast.LENGTH_SHORT).show();
+		}
 		mShell.printOutput();
 		mShell.setFlagFile(flagFile);
 		//---- finish shell initialization ----

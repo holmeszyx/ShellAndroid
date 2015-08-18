@@ -42,7 +42,8 @@ public class ShellAndroid implements Shell {
 
     private CmdTerminalObserver mTerminalObserver;
 
-    private byte[] mLock = new byte[0];
+    private final byte[] mLock = new byte[0];
+    private final AtomicBoolean mCmdAlreadyFinished = new AtomicBoolean(true);
 
     private StringBuilder mLastResultBuilder = new StringBuilder(512);
     private String mLastResult = null;
@@ -202,6 +203,9 @@ public class ShellAndroid implements Shell {
     public void setFlagFile(String file) {
         mFlagFile = file;
         mFlagCmd = mFlagTrigger + " " + mFlagFile;
+        if (DEBUG){
+            Log.d(TAG, "flag cmd: " + mFlagCmd);
+        }
         if (mTerminalObserver != null) {
             mTerminalObserver.stopWatching();
         }
@@ -220,7 +224,6 @@ public class ShellAndroid implements Shell {
             mErrorStream = process.getErrorStream();
             mWriteStream = process.getOutputStream();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         mIsClosed = false;
@@ -245,7 +248,6 @@ public class ShellAndroid implements Shell {
                 mErrorStream.close();
                 mWriteStream.close();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             try {
@@ -278,14 +280,12 @@ public class ShellAndroid implements Shell {
 
     @Override
     public boolean exec(boolean asRoot, String... arrParam) {
-        // TODO Auto-generated method stub
         execute(arrParam);
         return true;
     }
 
     @Override
     public void checkRoot() {
-        // TODO Auto-generated method stub
         if (!mHasRoot.get()) {
             int id = checkId();
             if (id == 0 && (mIdContext == null || mIdContext.isRootRole())) {
@@ -304,13 +304,11 @@ public class ShellAndroid implements Shell {
 
     @Override
     public boolean hasRoot() {
-        // TODO Auto-generated method stub
         return mHasRoot.get();
     }
 
     @Override
     public boolean exitRoot() {
-        // TODO Auto-generated method stub
         if (hasRoot()) {
             execute("exit");
             if (checkId() == 0) {
@@ -438,7 +436,6 @@ public class ShellAndroid implements Shell {
                 e.printStackTrace();
             }
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             throw new ShellExecuteException("Input cmd error, Shell maybe closed. cmd: " + cmd, e);
         }
     }
@@ -449,6 +446,22 @@ public class ShellAndroid implements Shell {
      * @param cmds
      */
     private void execute(String... cmds) {
+        if (mIsInBlockMode){
+            mCmdAlreadyFinished.set(false);
+            // below is for test
+//            synchronized (mLock){
+//                if (!mCmdAlreadyFinished.get()){
+//                    // wait for previous cmd finish
+//                    try {
+//                        mLock.wait();
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//                mCmdAlreadyFinished.set(false);
+//            }
+        }
+
         for (int i = 0; i < cmds.length; i++) {
             String cmd = cmds[i].trim();
             cmd = filterCmdEndChars(cmd);
@@ -482,21 +495,25 @@ public class ShellAndroid implements Shell {
                 mWriteStream.write(10);
                 mWriteStream.flush();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 throw new ShellExecuteException("Input cmd error, Shell maybe closed. cmd: " + cmd, e);
             }
 
             if (mIsInBlockMode){
                 synchronized (mLock) {
-                    try {
-                        if (mWaitTimeout > 0){
-                            mLock.wait(mWaitTimeout);
-                        }else {
-                            mLock.wait();
+                    if (!mCmdAlreadyFinished.get()) {
+                        // fix bug. for some reason,
+                        // unlock will happen before enter lock black
+                        try {
+                            if (mWaitTimeout > 0){
+                                mLock.wait(mWaitTimeout);
+                                // for other thread exec cmd
+                                mLock.notifyAll();
+                            }else {
+                                mLock.wait();
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
                     }
                 }
             }
@@ -537,17 +554,15 @@ public class ShellAndroid implements Shell {
 
         @Override
         public void run() {
-            // TODO Auto-generated method stub
         	InputStream input = mReadStream;
             if (input != null){
             	byte[] buff = new byte[4096];
-            	int readed = -1;
+            	int readed;
             	try {
             		while ((readed = input.read(buff)) > 0) {
             			printBuff(buff, readed);
             		}
             	} catch (IOException e) {
-            		// TODO Auto-generated catch block
             		e.printStackTrace();
             	}
             }else{
@@ -597,7 +612,6 @@ public class ShellAndroid implements Shell {
 
         public CmdTerminalObserver(String file) {
             super(file, OPEN);
-            // TODO Auto-generated constructor stub
             mWatchedFile = file;
         }
 
@@ -610,6 +624,10 @@ public class ShellAndroid implements Shell {
             mLastResult = mLastResultBuilder.toString();
             synchronized (mLock) {
                 mLock.notify();
+                mCmdAlreadyFinished.set(true);
+            }
+            if (DEBUG){
+                Log.d(TAG, "** cmd finish **");
             }
         }
 
