@@ -150,7 +150,7 @@ public class ShellAndroid implements Shell {
      * initialize command terminal flag tool
      * with exist cflag
      * @param context
-     * @param cflag a exist cflag
+     * @param cFlag a exist cflag
      * @return
      */
     public String initFlag(Context context, File cFlag){
@@ -169,6 +169,28 @@ public class ShellAndroid implements Shell {
         	mIsInBlockMode = false;
         }
         mChmod.setChmod(mFlagTrigger, "777");
+        return flagFile.getAbsolutePath();
+    }
+
+    /**
+     * initialize command terminal flag tool
+     * with Android internal tool, not use cflag.
+     * so if you don't want use(extract) cflag, you need call
+     * this method instead of other initFlag methods
+     * @param context
+     * @return
+     */
+    public String initFlagMinimum(Context context){
+        File flagFile = context.getFileStreamPath(FLAG_FILE_NAME + FLAG_ID.incrementAndGet());
+        if (!flagFile.exists()) {
+            try {
+                flagFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        mFlagTrigger = "cat";
         return flagFile.getAbsolutePath();
     }
 
@@ -231,7 +253,9 @@ public class ShellAndroid implements Shell {
 			} catch (Exception e) {
 				// This is Auto-generated catch block
 			}
-            Log.d(TAG, "**Shell destroyed**");
+            if (DEBUG) {
+                Log.d(TAG, "**Shell destroyed**");
+            }
         }
         if (mTerminalObserver != null) {
             // if has multi instance, the observer
@@ -536,7 +560,9 @@ public class ShellAndroid implements Shell {
                 close();
             }
 
-            Log.d(TAG, "**over**");
+            if (DEBUG) {
+                Log.d(TAG, "**over**");
+            }
         }
 
         private void printBuff(byte[] buff, int length) {
