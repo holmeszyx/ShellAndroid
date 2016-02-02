@@ -435,7 +435,7 @@ public class ShellAndroid implements Shell {
                 // It is Auto-generated catch block
                 e.printStackTrace();
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new ShellExecuteException("Input cmd error, Shell maybe closed. cmd: " + cmd, e);
         }
     }
@@ -485,15 +485,17 @@ public class ShellAndroid implements Shell {
                 mWriteStream.flush();
 
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(100l);
                 } catch (InterruptedException e) {
                     // It is Auto-generated catch block
                     e.printStackTrace();
                 }
                 // 2. for the pipe of sh or su
-                mWriteStream.write(mFlagCmd.getBytes());
-                mWriteStream.write(10);
-                mWriteStream.flush();
+                if (!mIsInBlockMode || !mCmdAlreadyFinished.get()) {
+                    mWriteStream.write(mFlagCmd.getBytes());
+                    mWriteStream.write(10);
+                    mWriteStream.flush();
+                }
             } catch (IOException e) {
                 throw new ShellExecuteException("Input cmd error, Shell maybe closed. cmd: " + cmd, e);
             }
