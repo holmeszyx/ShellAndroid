@@ -5,12 +5,15 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.ArrayList;
 
 import z.hol.shellandroid.ShellAndroid;
 
@@ -20,11 +23,27 @@ import z.hol.shellandroid.ShellAndroid;
  *
  */
 public class MainActivity extends Activity implements OnClickListener{
+
+	public static final String TAG = "ShellEg";
 	
-	private TextView txtResult, txtCheckRoot, txtExitRoot;
+	private TextView txtResult, txtCheckRoot, txtExitRoot, txtBatCmd;
 	private EditText edtCmd;
 	private ShellAndroid mShell;
 	private boolean mUseMinimum = true;
+
+	private String[] mBatCmds = new String[]{
+			"id",
+			"cd",
+			"pwd",
+			"which su",
+			"id",
+			"date",
+			"sync",
+			"id",
+			"ls -l",
+			"echo 'this is last cmd for bat cmds'",
+			"pwd",
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -35,12 +54,17 @@ public class MainActivity extends Activity implements OnClickListener{
 		txtResult.setMovementMethod(new ScrollingMovementMethod());
 		txtCheckRoot = (TextView) findViewById(R.id.check_root_result);
 		txtExitRoot = (TextView) findViewById(R.id.exit_root_result);
+		txtBatCmd = (TextView) findViewById(R.id.bat_exec_result);
 
 		findViewById(R.id.execute).setOnClickListener(this);
 		findViewById(R.id.check_root).setOnClickListener(this);
 		findViewById(R.id.exit_root).setOnClickListener(this);
-		
+		findViewById(R.id.bat_exec).setOnClickListener(this);
+
+		mBatCmds[1] = "cd /data/data/" + getPackageName();
+
 		//---- shell initialization ----
+		ShellAndroid.DEBUG = true;
 		mShell = new ShellAndroid(null);
 		String flagFile;
 		if (!mUseMinimum){
@@ -87,6 +111,9 @@ public class MainActivity extends Activity implements OnClickListener{
 		case R.id.exit_root:
 			new RootCheckTask(2).execute();
 			break;
+		case R.id.bat_exec:
+			new BatExecuteTask().execute(mBatCmds);
+			break;
 		}
 	}
 	
@@ -116,7 +143,50 @@ public class MainActivity extends Activity implements OnClickListener{
 			}
 		}
 	}
-	
+
+	private class BatExecuteTask extends AsyncTask<String, String, String>{
+
+		private ArrayList<String> mResults = new ArrayList<String>(16);
+
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			findViewById(R.id.bat_exec).setEnabled(false);
+		}
+
+		@Override
+		protected String doInBackground(String... params) {
+			if (params != null && params.length > 0) {
+				for (int i = 0; i < params.length; i ++) {
+					mShell.exec(false, params[i]);
+					publishProgress(String.valueOf(i+1), mShell.getLastResult());
+				}
+			}
+			return mShell.getLastResult();
+		}
+
+		@Override
+		protected void onProgressUpdate(String... values) {
+			if (values != null && values.length > 0) {
+				txtBatCmd.setText(String.format("%s cmd execed", values[0]));
+				txtResult.setText(values[1]);
+				mResults.add(values[1]);
+			}
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+			super.onPostExecute(result);
+			findViewById(R.id.bat_exec).setEnabled(true);
+			if (!TextUtils.isEmpty(result)){
+				txtResult.setText(result);
+			}else{
+				txtResult.setText("Empty result");
+			}
+			Log.d(TAG, mResults.toString());
+		}
+	}
+
 	public class RootCheckTask extends AsyncTask<Void, Void, Boolean>{
 		
 		private final int mTaskType;

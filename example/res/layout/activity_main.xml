@@ -77,6 +77,28 @@
                 />
             
         </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
+
+            <Button android:id="@+id/bat_exec"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="128dp"
+                    android:text="Exec Batch"
+                />
+
+            <TextView android:id="@+id/bat_exec_result"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="Exec 10 cmds with code"
+                />
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </RelativeLayout>

@@ -24,12 +24,13 @@ How to use
 
 		//---- shell initialization ----
 		mShell = new ShellAndroid();
-		String flagFile = mShell.initFlag(getApplicationContext());
+		// String flagFile = mShell.initFlag(getApplicationContext()); // not suggest to use this for most device
+		String flagFile = mShell.initFlagMinimum(getApplicationContext());
 		mShell.printOutput();
 		mShell.setFlagFile(flagFile);
 		//---- finish shell initialization ----
 
-* Close the ShellAndroid if you never need it.(like the example close the shell on the onDestory method in activity)
+* Close the ShellAndroid if you never need it.(like the example close the shell on the onDestroy method in activity)
 
 		protected void onDestroy() {
 			// TODO Auto-generated method stub

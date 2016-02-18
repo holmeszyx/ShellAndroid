@@ -1,5 +1,10 @@
 package z.hol.shellandroid;
 
+import android.content.Context;
+import android.os.FileObserver;
+import android.text.TextUtils;
+import android.util.Log;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,10 +13,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import z.hol.shellandroid.exception.ShellExecuteException;
-import android.content.Context;
-import android.os.FileObserver;
-import android.text.TextUtils;
-import android.util.Log;
 
 /**
  * A Shell of android
@@ -20,7 +21,7 @@ import android.util.Log;
  * 
  */
 public class ShellAndroid implements Shell {
-    public static boolean DEBUG = true;
+    public static boolean DEBUG = false;
     public static final String TAG = "ShellAndroid";
 
     public static final String CFLAG_TOOL_FILE_NAME = "cflag";
@@ -43,6 +44,7 @@ public class ShellAndroid implements Shell {
     private CmdTerminalObserver mTerminalObserver;
 
     private final byte[] mLock = new byte[0];
+    private final byte[] mTermLock = new byte[0];
     private final AtomicBoolean mCmdAlreadyFinished = new AtomicBoolean(true);
 
     private StringBuilder mLastResultBuilder = new StringBuilder(512);
@@ -464,6 +466,9 @@ public class ShellAndroid implements Shell {
 
         for (int i = 0; i < cmds.length; i++) {
             String cmd = cmds[i].trim();
+            if (TextUtils.isEmpty(cmd)) {
+                continue;
+            }
             cmd = filterCmdEndChars(cmd);
             if (DEBUG) Log.d(TAG, "cmd: " + cmd);
             byte[] rawCmd = cmd.getBytes();
@@ -484,11 +489,23 @@ public class ShellAndroid implements Shell {
                 mWriteStream.write(10);
                 mWriteStream.flush();
 
-                try {
-                    Thread.sleep(100l);
-                } catch (InterruptedException e) {
-                    // It is Auto-generated catch block
-                    e.printStackTrace();
+                if (mTerminalObserver != null) {
+                    // to optimize executing cmds batched
+                    // can be notify by terminal signal immediately
+                    // see #CmdTerminalObserver
+                    synchronized (mTermLock) {
+                        try {
+                            mTermLock.wait(100l);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }else {
+                    try {
+                        Thread.sleep(100l);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
                 // 2. for the pipe of sh or su
                 if (!mIsInBlockMode || !mCmdAlreadyFinished.get()) {
@@ -584,8 +601,8 @@ public class ShellAndroid implements Shell {
 
         private void printBuff(byte[] buff, int length) {
             String buffStr = new String(buff, 0, length);
-            if (DEBUG) Log.d(TAG, "~:" + buffStr);
             mLastResultBuilder.append(buffStr);
+            if (DEBUG) Log.d(TAG, "~:" + buffStr);
         }
     } 
 
@@ -623,12 +640,21 @@ public class ShellAndroid implements Shell {
                 return;
             }
             // Log.d(TAG, mWatchedFile + " opened");
+            try {
+                // just want to waiting output(ReadStream) result of last process be fully read
+                Thread.sleep(15l);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             mLastResult = mLastResultBuilder.toString();
             synchronized (mLock) {
                 mLock.notify();
                 mCmdAlreadyFinished.set(true);
             }
-            if (DEBUG){
+            synchronized (mTermLock) {
+                mTermLock.notify();
+            }
+            if (DEBUG) {
                 Log.d(TAG, "** cmd finish **");
             }
         }
