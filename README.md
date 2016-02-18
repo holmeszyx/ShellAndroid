@@ -18,7 +18,7 @@ A exact result of last command got from the ShellAndroid.
 How to use
 ----------
 
-* Put the cflag executable file to assets in your project.
+* If **not use ShellAndroid.initFlagMinimum(context)**, Put the cflag executable file to assets in your project.
 
 * Initialize the ShellAndroid.(see mainActivity.java in example)
 
