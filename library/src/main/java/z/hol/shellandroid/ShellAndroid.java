@@ -233,7 +233,7 @@ public class ShellAndroid implements Shell {
 
     /**
      * Block mode. only in block mode, can get cmds result.
-     * @see {@link #getLastResult()}
+     * @see #getLastResult()
      * @return
      */
     public boolean isInBlockMode(){
@@ -495,14 +495,14 @@ public class ShellAndroid implements Shell {
                     // see #CmdTerminalObserver
                     synchronized (mTermLock) {
                         try {
-                            mTermLock.wait(100l);
+                            mTermLock.wait(100L);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
                 }else {
                     try {
-                        Thread.sleep(100l);
+                        Thread.sleep(100L);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }

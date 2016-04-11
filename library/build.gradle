@@ -1,0 +1,23 @@
+apply plugin: 'com.android.library'
+
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
+
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 22
+        versionCode 3
+        versionName "1.0.3"
+    }
+
+}
+
+dependencies {
+}
+
+def pubfile = new File('publish.gradle')
+if (pubfile.exists()) {
+    apply from : 'publish.gradle'
+}

@@ -52,9 +52,8 @@ public class ShellUtils {
 	}
 	
 	/**
-	 * 清空流
+	 * full out stream
 	 * @param in
-	 * @throws IOException
 	 */
 	public static void emptyInputStream(final InputStream in){
 		Thread thread = new Thread(){
@@ -70,7 +69,7 @@ public class ShellUtils {
 						e.printStackTrace();
 					}
 				}
-			};
+			}
 		};
 		thread.setDaemon(true);
 		thread.start();

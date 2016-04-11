@@ -27,9 +27,12 @@ proguard/
 *.ipr
 *.iws
 .idea/
+build/
 /build/
 /.settings/
 obj/
 .gradle/
 example/assets/
 example/build/
+
+publish.gradle

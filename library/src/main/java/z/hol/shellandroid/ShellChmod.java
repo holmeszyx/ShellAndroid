@@ -1,8 +1,10 @@
 package z.hol.shellandroid;
 
 /**
- * Chmod impelemnted by shell.<br>
- * sh --> chmod mode file
+ * Chmod implemented by shell.<br>
+ * <pre>
+ * 	sh -- chmod mode file
+ * </pre>
  * @author holmes
  *
  */

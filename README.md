@@ -53,6 +53,12 @@ How to use
 		shell.hasRoot()	// Is it the root user now
 		shell.exitRoot()	// exit root user, even if you execute su command many times.
 
+Gradle
+------
+
+easy to use by gradle
+
+`compile 'z.hol.shellandroid:library:1.0.3'`
 
 Bug
 ---
